@@ -1,0 +1,1 @@
+{"root":["./src/api.ts","./src/main.ts","./src/store.ts","./src/app.vue","./src/components/confirmmodal.vue","./src/components/consolepanel.vue","./src/components/datasourcemodal.vue","./src/components/mainpanels.vue","./src/components/sidebardatasources.vue"],"version":"5.7.3"}

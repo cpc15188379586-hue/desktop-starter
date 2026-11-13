@@ -1,0 +1,59 @@
+name: Build Windows 安装包
+
+on:
+  # 手动触发：GitHub 仓库页面 → Actions → Build Windows 安装包 → Run workflow
+  workflow_dispatch:
+  # 打 tag（如 v0.1.0）时自动触发
+  push:
+    tags: ["v*"]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # 1. 先在 Windows 上用 PyInstaller 打后端 sidecar
+      #    Tauri externalBin 要求带目标三元组后缀：python-backend-x86_64-pc-windows-msvc.exe
+      - name: 打包 Python 后端
+        shell: bash
+        run: |
+          pip install -r backend/requirements.txt
+          cd backend
+          python build.py
+          mkdir -p ../src-tauri/binaries
+          cp dist/python-backend.exe ../src-tauri/binaries/python-backend-x86_64-pc-windows-msvc.exe
+
+      - name: 安装 Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            frontend/package-lock.json
+
+      # 2. 前端 + 根目录依赖
+      - name: 安装前端依赖
+        shell: bash
+        run: |
+          npm ci
+          cd frontend && npm ci
+
+      # 3. Tauri 打包（产出 NSIS .exe 安装包 + .msi）
+      - name: Tauri 打包
+        run: npm run tauri:build
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: |
+            src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/msi/*.msi
+          if-no-files-found: error

@@ -1,0 +1,18 @@
+[package]
+name = "desktop-starter"
+version = "0.1.0"
+description = "Tauri Vue Python desktop starter"
+authors = ["you"]
+edition = "2021"
+
+[lib]
+name = "desktop_starter_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-shell = "2"
