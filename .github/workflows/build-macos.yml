@@ -1,0 +1,52 @@
+name: Build macOS 安装包
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    tags: ["v*"]
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 打包 Python 后端
+        run: |
+          pip install -r backend/requirements.txt
+          cd backend
+          python build.py
+          mkdir -p ../src-tauri/binaries
+          cp dist/python-backend ../src-tauri/binaries/python-backend-aarch64-apple-darwin
+
+      - name: 安装 Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            frontend/package-lock.json
+
+      - name: 安装前端依赖
+        run: |
+          npm ci
+          cd frontend && npm ci
+
+      - name: 构建 macOS 安装包
+        run: npm run tauri:build
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-installer
+          path: |
+            src-tauri/target/release/bundle/dmg/*.dmg
+            src-tauri/target/release/bundle/macos/*.app
+          if-no-files-found: error
