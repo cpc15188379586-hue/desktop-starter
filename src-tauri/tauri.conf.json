@@ -37,6 +37,11 @@
     ],
     "externalBin": [
       "binaries/python-backend"
-    ]
+    ],
+    "windows": {
+      "wix": {
+        "language": "zh-CN"
+      }
+    }
   }
 }
